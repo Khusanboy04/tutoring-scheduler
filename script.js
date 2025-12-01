@@ -2,7 +2,7 @@
 // Global config & helpers
 // =============================
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = "https://tutoring-scheduler.onrender.com/api";
 
 function getCurrentUser() {
   try {
@@ -77,6 +77,23 @@ function addOneHour(timeStr) {
   const hh = String(h2).padStart(2, "0");
   return `${hh}:${m.toString().padStart(2, "0")}`;
 }
+
+function getLocationForSubject(subjectName) {
+  if (!subjectName) return "";
+
+  const name = subjectName.toLowerCase();
+
+  if (name.startsWith("math")) {
+    return "Hume Hall 324 or 326";
+  }
+
+  if (name.startsWith("csci")) {
+    return "Weir Hall 234";
+  }
+
+  return "";
+}
+
 
 // =============================
 // LOGIN PAGE (index.html)
@@ -499,12 +516,22 @@ async function loadStudentAppointments(user, listEl) {
           ? "pill pill-accepted"
           : "pill";
 
+      // NEW: only show location if accepted
+      let locationLine = "";
+      if (appt.status === "accepted") {
+        const loc = getLocationForSubject(appt.subject_name);
+        if (loc) {
+          locationLine = `<br>Location: ${loc}`;
+        }
+      }
+
       li.innerHTML = `
         <strong>${appt.subject_name}</strong><br>
         With: ${appt.tutor_name}<br>
         <span class="small-muted">
           ${formatDateTime(appt.available_date, appt.start_time)} - ${formatTime(endTime)}
         </span>
+        ${locationLine}
         <span class="${pillClass}">${appt.status}</span>
       `;
       listEl.appendChild(li);
@@ -514,6 +541,7 @@ async function loadStudentAppointments(user, listEl) {
     listEl.innerHTML = "<li>Error loading sessions.</li>";
   }
 }
+
 
 
 
@@ -637,12 +665,22 @@ async function loadTutorUpcomingAppointments(user, listEl) {
           ? "pill pill-accepted"
           : "pill";
 
+      // NEW: only show location if accepted
+      let locationLine = "";
+      if (appt.status === "accepted") {
+        const loc = getLocationForSubject(appt.subject_name);
+        if (loc) {
+          locationLine = `<br>Location: ${loc}`;
+        }
+      }
+
       li.innerHTML = `
         <strong>${appt.subject_name}</strong><br>
         With: ${appt.student_name}<br>
         <span class="small-muted">
           ${formatDateTime(appt.available_date, appt.start_time)} - ${formatTime(endTime)}
         </span>
+        ${locationLine}
         <span class="${pillClass}">${appt.status}</span>
       `;
       listEl.appendChild(li);
@@ -652,6 +690,7 @@ async function loadTutorUpcomingAppointments(user, listEl) {
     listEl.innerHTML = "<li>Error loading sessions.</li>";
   }
 }
+
 
 
 
