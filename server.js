@@ -16,11 +16,21 @@ app.use(bodyParser.json());
 // DATABASE CONNECTION
 // =============================
 
-const db = mysql.createPool({
-  host: "localhost",
-  user: "root",                // ⬅️ change if needed
-  password: "S@m@nd@r@k2004", // ⬅️ put your MySQL password
-  database: "tutoring_system",
+// const db = mysql.createPool({
+//   host: "localhost",
+//   user: "root",                // ⬅️ change if needed
+//   password: "S@m@nd@r@k2004", // ⬅️ put your MySQL password
+//   database: "tutoring_system",
+// });
+
+const mysql = require("mysql2/promise");
+
+const pool = mysql.createPool({
+  host: process.env.MYSQLHOST || "localhost",
+  user: process.env.MYSQLUSER || "root",
+  password: process.env.MYSQLPASSWORD || "S@m@nd@r@k2004",
+  database: process.env.MYSQLDATABASE || "tutoring_system",
+  port: process.env.MYSQLPORT || 3306,
 });
 
 // Simple helper using Promises
@@ -292,6 +302,7 @@ app.get("/api/student/:studentId/appointments/upcoming", async (req, res) => {
         a.end_time,
         s.subject_name,
         tut.full_name AS tutor_name
+        
       FROM appointments ap
       JOIN availability a ON ap.availability_id = a.availability_id
       JOIN subjects s ON ap.subject_id = s.subject_id
@@ -403,6 +414,7 @@ app.get("/api/tutor/:tutorId/appointments/upcoming", async (req, res) => {
         a.end_time,
         s.subject_name,
         stu.full_name AS student_name
+        
       FROM appointments ap
       JOIN availability a ON ap.availability_id = a.availability_id
       JOIN subjects s ON ap.subject_id = s.subject_id
@@ -546,10 +558,15 @@ app.get("/api/tutor/:tutorId/availability", async (req, res) => {
 // =============================
 // START SERVER
 // =============================
-const PORT = 3000;
-app.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-);
+// const PORT = 3000;
+// app.listen(PORT, () =>
+//   console.log(`🚀 Server running on http://localhost:${PORT}`)
+// );
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 // Get ALL subjects (for dropdowns)
 app.get("/api/subjects", async (req, res) => {
