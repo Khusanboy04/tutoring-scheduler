@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tutor Dashboard - Tutoring Scheduler</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* small page-specific adjustments so it looks good even if style.css differs */
+    .tutor-container {
+      max-width: 900px;
+      margin: 32px auto;
+      padding: 24px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+    .header-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom: 16px;
+    }
+    .requests, .availability {
+      margin-top: 16px;
+    }
+    .request-item, .slot-item {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      background:#f6f9ff;
+      padding:12px;
+      border-radius:8px;
+      margin:8px 0;
+    }
+    .request-details { flex: 1; margin-right: 12px; }
+    .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; }
+    .btn-accept { background:#28a745; color:white; margin-right:8px; }
+    .btn-decline { background:#dc3545; color:white; }
+    .btn-back { background:#007bff; color:white; }
+    .small-muted { color:#666; font-size:0.9rem; }
+    .status-pill { padding:6px 10px; border-radius:999px; font-weight:600; font-size:0.9rem; }
+    .status-pending { background:#fff3cd; color:#856404; }
+    .status-accepted { background:#d4edda; color:#155724; }
+    .status-declined { background:#f8d7da; color:#721c24; }
+  </style>
+</head>
+<body>
+  <div class="tutor-container">
+    <div class="header-row">
+      <h1>Tutor Dashboard</h1>
+      <div>
+        <button class="btn btn-back" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+      </div>
+    </div>
+
+    <p class="small-muted">This page simulates the tutor view: pending requests, ability to accept/decline, and a quick availability list. Data is mocked for the demo.</p>
+
+    <!-- Pending Requests -->
+    <section class="requests">
+      <h2>Pending Requests</h2>
+      <div id="requestsList">
+        <!-- JS will populate -->
+      </div>
+      <p id="noRequestsNote" class="small-muted" style="display:none;">No pending requests at the moment.</p>
+    </section>
+
+    <!-- Current Availability -->
+    <section class="availability">
+      <h2>Your Availability</h2>
+      <div id="availabilityList">
+        <!-- JS will populate -->
+      </div>
+      <p class="small-muted">When you accept a request, the corresponding availability slot becomes booked (simulated here).</p>
+    </section>
+
+    <!-- Log area for demo feedback -->
+    <section style="margin-top:18px;">
+      <h3>Activity Log</h3>
+      <div id="log" style="background:#f8f9fb;padding:10px;border-radius:8px;min-height:40px;color:#333;"></div>
+    </section>
+  </div>
+
+  <script>
+    // Mock demo data (later replaced by backend)
+    let availability = [
+      { availability_id: 1, subject: "Math", date: "2025-10-27", start_time: "10:00", end_time: "11:00", status: "available" },
+      { availability_id: 2, subject: "Physics", date: "2025-10-27", start_time: "11:30", end_time: "12:30", status: "available" },
+      { availability_id: 3, subject: "Chemistry", date: "2025-10-28", start_time: "09:00", end_time: "10:00", status: "available" }
+    ];
+
+    let requests = [
+      { request_id: 1, student_name: "Alice Student", subject: "Math", requested_date: "2025-10-27", requested_time: "10:00", availability_id: 1, status: "pending" },
+      { request_id: 2, student_name: "John Doe", subject: "Physics", requested_date: "2025-10-27", requested_time: "11:30", availability_id: 2, status: "pending" }
+    ];
+
+    const requestsListEl = document.getElementById('requestsList');
+    const availabilityListEl = document.getElementById('availabilityList');
+    const logEl = document.getElementById('log');
+    const noRequestsNote = document.getElementById('noRequestsNote');
+
+    function renderRequests() {
+      requestsListEl.innerHTML = '';
+      const pending = requests.filter(r => r.status === 'pending');
+      if (pending.length === 0) {
+        noRequestsNote.style.display = 'block';
+      } else {
+        noRequestsNote.style.display = 'none';
+      }
+      pending.forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'request-item';
+        div.innerHTML = `
+          <div class="request-details">
+            <strong>${r.student_name}</strong> — <span class="small-muted">${r.subject}</span><br>
+            <span class="small-muted">${formatDate(r.requested_date)} • ${formatTime(r.requested_time)}</span>
+          </div>
+          <div>
+            <button class="btn btn-accept" onclick="acceptRequest(${r.request_id})">Accept</button>
+            <button class="btn btn-decline" onclick="declineRequest(${r.request_id})">Decline</button>
+          </div>
+        `;
+        requestsListEl.appendChild(div);
+      });
+    }
+
+    function renderAvailability() {
+      availabilityListEl.innerHTML = '';
+      availability.forEach(slot => {
+        const div = document.createElement('div');
+        div.className = 'slot-item';
+        div.innerHTML = `
+          <div>
+            <strong>${slot.subject}</strong><br>
+            <span class="small-muted">${formatDate(slot.date)} • ${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}</span>
+          </div>
+          <div>
+            <span class="status-pill ${slot.status === 'available' ? 'status-pending' : (slot.status === 'booked' ? 'status-accepted' : '')}" style="margin-right:12px;">
+              ${slot.status}
+            </span>
+            <button class="btn" onclick="simulateAddSlot()">+ add</button>
+          </div>
+        `;
+        availabilityListEl.appendChild(div);
+      });
+    }
+
+    // Utility formatters
+    function formatDate(d) {
+      const dt = new Date(d + 'T00:00:00');
+      return dt.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+    }
+    function formatTime(t) {
+      // t like "10:00" or "14:30"
+      let [hh, mm] = t.split(':');
+      hh = parseInt(hh);
+      const ampm = hh >= 12 ? 'PM' : 'AM';
+      const displayHour = ((hh + 11) % 12 + 1);
+      return `${displayHour}:${mm} ${ampm}`;
+    }
+
+    // Accept/Decline logic (simulated)
+    function acceptRequest(id) {
+      const req = requests.find(r => r.request_id === id);
+      if (!req) return;
+      // mark request accepted
+      req.status = 'accepted';
+      // mark availability as booked
+      const slot = availability.find(a => a.availability_id === req.availability_id);
+      if (slot) slot.status = 'booked';
+      log(`Accepted request ${id} — ${req.student_name} (${req.subject})`);
+      renderRequests();
+      renderAvailability();
+    }
+
+    function declineRequest(id) {
+      const req = requests.find(r => r.request_id === id);
+      if (!req) return;
+      req.status = 'declined';
+      // do NOT remove availability — it stays available for others
+      log(`Declined request ${id} — ${req.student_name} (${req.subject})`);
+      renderRequests();
+      renderAvailability();
+    }
+
+    function log(text) {
+      const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      logEl.innerHTML = `${time} — ${text}<br>` + logEl.innerHTML;
+    }
+
+    // Demo helper to simulate adding a new availability slot
+    function simulateAddSlot() {
+      const newId = availability.length ? availability[availability.length-1].availability_id + 1 : 1;
+      availability.push({
+        availability_id: newId,
+        subject: 'Extra Help',
+        date: '2025-10-29',
+        start_time: '14:00',
+        end_time: '15:00',
+        status: 'available'
+      });
+      log('Added demo availability slot');
+      renderAvailability();
+    }
+
+    // Initial render
+    renderRequests();
+    renderAvailability();
+
+
+
+  </script>
+
+  <script>
+fetch("http://localhost:3000/api/tutors")
+  .then(res => res.json())
+  .then(data => {
+    console.log(data); // shows your tutor table rows
+  })
+  .catch(err => console.error(err));
+</script>
+
+<script>
+function createAppointment() {
+  fetch("http://localhost:3000/api/appointments", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      student_id: 1,
+      tutor_id: 2,
+      subject_id: 1,
+      appointment_date: "2025-10-30",
+      appointment_time: "14:00",
+      status: "pending"
+    })
+  })
+  .then(res => res.json())
+  .then(data => alert(data.message))
+  .catch(err => console.error(err));
+}
+</script>
+
+
+</body>
+</html>

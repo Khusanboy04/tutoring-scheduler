@@ -1,0 +1,161 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f7f9fc;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  height: 100vh;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 350px;
+  text-align: center;
+}
+
+h1 {
+  color: #1e2a47;
+  margin-bottom: 20px;
+}
+
+form label {
+  display: block;
+  text-align: left;
+  margin-top: 10px;
+  color: #333;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #007bff;
+  color: white;
+  padding: 12px 24px;
+}
+
+.navbar h2 {
+  margin: 0;
+}
+
+.dashboard {
+  width: 80%;
+  max-width: 700px;
+  margin: 40px auto;
+  background-color: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.role-toggle {
+  text-align: right;
+  margin-bottom: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+.list ul, #requestsList {
+  list-style-type: none;
+  padding: 0;
+}
+
+.list li, #requestsList li {
+  background: #f5f7fa;
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+button.accept {
+  background-color: #28a745;
+}
+
+button.decline {
+  background-color: #dc3545;
+}
+
+button.accept:hover {
+  background-color: #218838;
+}
+
+button.decline:hover {
+  background-color: #c82333;
+}
+
+.container {
+  width: 90%;
+  max-width: 400px;
+  margin: 80px auto;
+  background-color: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.container h2 {
+  margin-bottom: 20px;
+  color: #007bff;
+}
+
+.container form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.container input, .container select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.container button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.container button:hover {
+  background-color: #0056b3;
+}
+
+.alt-link {
+  margin-top: 12px;
+}

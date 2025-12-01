@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutoring Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .dashboard-shell {
+      width: 90%;
+      max-width: 1000px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .dashboard-section {
+      display: none;
+    }
+    .dashboard-section.active {
+      display: block;
+    }
+    .section-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+    }
+    .two-cols {
+      display:grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 20px;
+    }
+    .card {
+      background:#f7f9fc;
+      padding:16px;
+      border-radius:12px;
+      margin-bottom:16px;
+    }
+    .card h3 {
+      margin-top:0;
+    }
+    .tag {
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:0.75rem;
+      background:#e0ecff;
+      color:#1e2a47;
+      margin-left:6px;
+    }
+    .pill {
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:0.75rem;
+      margin-left:6px;
+      text-transform:capitalize;
+    }
+    .pill-pending { background:#fff3cd; color:#856404; }
+    .pill-accepted { background:#d4edda; color:#155724; }
+    .pill-declined { background:#f8d7da; color:#721c24; }
+    .pill-booked { background:#d4edda; color:#155724; }
+    .pill-available { background:#e2e3e5; color:#343a40; }
+    .notification-list {
+      list-style:none;
+      padding:0;
+      margin:0;
+      max-height:260px;
+      overflow-y:auto;
+    }
+    .notification-list li {
+      background:#f8f9fb;
+      margin-bottom:8px;
+      padding:8px 10px;
+      border-radius:8px;
+      font-size:0.9rem;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:8px;
+    }
+    .notification-list small {
+      color:#777;
+    }
+    .notification-unread {
+      border-left:4px solid #007bff;
+      padding-left:6px;
+    }
+    .notification-actions button {
+      font-size:0.75rem;
+      padding:4px 8px;
+    }
+    .inline-form {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:10px;
+    }
+    .inline-form input,
+    .inline-form select {
+      flex:1 1 120px;
+      min-width:120px;
+    }
+    .subtle {
+      font-size:0.85rem;
+      color:#666;
+      margin-top:4px;
+    }
+    .navbar-right {
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    #currentUserLabel {
+      font-size:0.9rem;
+      opacity:0.9;
+    }
+    .small-muted {
+      font-size: 0.85rem;
+        color: #555;
+    }
+    .notification-item {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    .notification-item.unread {
+      font-weight: 600;
+      border-left: 4px solid #007bff;
+      padding-left: 6px;
+    }
+
+    .mark-read-btn {
+      margin-left: 8px;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+    }
+    .small-muted {
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    .admin-pill {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #eee;
+      margin-left: 4px;
+    }
+    .admin-pill.pending { background: #ffe6b3; }
+    .admin-pill.accepted { background: #c8f7c5; }
+    .admin-pill.declined { background: #ffd1d1; }
+    .admin-pill.available { background: #d9f2ff; }
+    .admin-pill.booked { background: #e0d4ff; }
+
+
+    .subnav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .subnav-left h2 {
+    margin: 0;
+    font-size: 1.4rem;
+  }
+
+  .subnav-right {
+    display: flex;
+    gap: 8px;
+  }
+
+  .subnav-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background-color: #ffffff;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .subnav-btn-active {
+    border-color: #007bff;
+    color: #007bff;
+    font-weight: 600;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.15);
+  }
+
+
+
+
+
+    /* Override global body flex on this page */
+    body {
+      display: block;
+      height: auto;
+      min-height: 100vh;
+      align-items: stretch;
+      justify-content: flex-start;
+      overflow-y: auto;
+    }
+
+    /* Give the dashboard some breathing room from the top */
+    .dashboard-shell {
+      margin-top: 24px;
+      margin-bottom: 40px;
+    }
+
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <h2>Tutoring Scheduler</h2>
+    <div class="navbar-right">
+      <span id="currentUserLabel"></span>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </nav>
+
+  <div class="dashboard-shell">
+    <!-- STUDENT DASHBOARD -->
+    <section id="studentDashboard" class="dashboard-section">
+      <div class="section-header">
+        <h2>Student Dashboard <span class="tag">student</span></h2>
+      </div>
+
+      <div class="two-cols">
+        <!-- Left: search + results -->
+        <div>
+          <div class="card">
+            <h3>Find a Tutor</h3>
+            <form id="studentSearchForm" class="inline-form">
+  <select id="studentSearchSubject">
+    <option value="">Any subject</option>
+    <!-- JS will populate from DB -->
+  </select>
+  <input type="text" id="studentSearchTutorName" placeholder="Tutor name (optional)" />
+  <input type="date" id="studentSearchDate" />
+  <select id="studentSearchTime">
+    <option value="">Any time</option>
+    <option value="09:00">9:00 AM</option>
+    <option value="10:00">10:00 AM</option>
+    <option value="11:00">11:00 AM</option>
+    <option value="12:00">12:00 PM</option>
+    <option value="13:00">1:00 PM</option>
+    <option value="14:00">2:00 PM</option>
+    <option value="15:00">3:00 PM</option>
+    <option value="16:00">4:00 PM</option>
+  </select>
+  <button type="submit">Search</button>
+</form>
+
+            <p class="subtle">
+              You can search by course name (e.g., <strong>Math 111, CSCI 111</strong>), tutor name, date, and time.
+            </p>
+          </div>
+
+          <div class="card">
+            <h3>Available Slots</h3>
+            <ul id="studentResultsList" class="list">
+              <!-- JS populates -->
+            </ul>
+          </div>
+        </div>
+
+          <!-- Right: upcoming + notifications -->
+  <div>
+    <div class="card">
+      <h3>My Upcoming Sessions</h3>
+      <ul id="studentAppointmentsList" class="list">
+        <!-- JS populates -->
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Notifications</h3>
+      <ul id="studentNotificationsList" class="notification-list">
+        <!-- JS populates -->
+      </ul>
+      <p class="subtle">You’ll see when tutors accept or decline your requests here.</p>
+    </div>
+  </div>
+
+      </div>
+    </section>
+
+    <!-- TUTOR DASHBOARD -->
+    <section id="tutorDashboard" class="dashboard-section">
+      <div class="section-header">
+        <h2>Tutor Dashboard <span class="tag">tutor</span></h2>
+      </div>
+
+      <div class="two-cols">
+        <div>
+          <!-- Subjects -->
+          <div class="card">
+            <h3>My Subjects / Courses</h3>
+            <form id="tutorSubjectForm" class="inline-form">
+              <select id="tutorSubjectSelect" required>
+                <option value="">Select subject to add</option>
+                <!-- JS will populate from DB -->
+              </select>
+              <button type="submit">Add Subject</button>
+            </form>
+            <p class="subtle">
+              Choose from the list of university classes. You can only add subjects that already exist in the system.
+            </p>
+            <ul id="tutorSubjectsList" class="list">
+              <!-- JS populates tutor’s current subjects -->
+            </ul>
+          </div>
+
+          <!-- Availability -->
+          <div class="card">
+      <h3>My Availability</h3>
+      <form id="tutorAvailabilityForm" class="inline-form">
+        <input type="date" id="tutorAvailDate" required />
+        <select id="tutorAvailStartTime" required>
+          <option value="">Start time</option>
+          <option value="09:00">9:00 AM</option>
+          <option value="10:00">10:00 AM</option>
+          <option value="11:00">11:00 AM</option>
+          <option value="12:00">12:00 PM</option>
+          <option value="13:00">1:00 PM</option>
+          <option value="14:00">2:00 PM</option>
+          <option value="15:00">3:00 PM</option>
+          <option value="16:00">4:00 PM</option>
+        </select>
+        <button type="submit">Add 1-hour Slot</button>
+      </form>
+      <p class="subtle">
+        Each slot is exactly 1 hour (e.g., 12:00–1:00). Requested slots become <strong>pending</strong>.
+      </p>
+      <ul id="tutorAvailabilityList" class="list">
+        <!-- JS populates -->
+      </ul>
+    </div>
+
+        <!-- Right: requests + upcoming + notifications (unchanged) -->
+        <div>
+          <div class="card">
+            <h3>Incoming Requests</h3>
+            <ul id="tutorRequestsList" class="list">
+              <!-- JS populates -->
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>My Upcoming Sessions</h3>
+            <ul id="tutorUpcomingList" class="list">
+              <!-- JS populates -->
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Notifications</h3>
+            <ul id="tutorNotificationsList" class="notification-list">
+              <!-- JS populates -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ADMIN DASHBOARD -->
+    <section id="adminDashboard" class="dashboard-section" style="display: none;">
+      <div class="section-header">
+        <h2>Admin Dashboard <span class="tag">admin</span></h2>
+      </div>
+
+      <div class="two-cols">
+        <!-- Left: overview + subjects -->
+        <div>
+          <!-- System Overview -->
+          <div class="card">
+            <h3>System Overview</h3>
+            <ul class="list">
+              <li>Total users: <strong id="adminTotalUsers">0</strong></li>
+              <li>Total students: <strong id="adminTotalStudents">0</strong></li>
+              <li>Total tutors: <strong id="adminTotalTutors">0</strong></li>
+              <li> appointments: <strong id="adminTotalAppointments">0</strong></li>
+              <li>Pending requests: <strong id="adminPendingAppointments">0</strong></li>
+            </ul>
+          </div>
+
+          <!-- Subject Management -->
+          <div class="card">
+            <h3>Subjects / Courses</h3>
+            <form id="adminSubjectForm" class="inline-form">
+              <input type="text" id="adminNewSubjectName" placeholder="New subject name" required />
+              <button type="submit">Add Subject</button>
+            </form>
+            <p class="subtle">Admins can add or delete subjects. Deleting a subject that is in use should be done carefully.</p>
+            <ul id="adminSubjectsList" class="list">
+              <!-- JS populates -->
+            </ul>
+          </div>
+        </div>
+
+        <!-- Right: availability & session management -->
+        <div>
+          <div class="card">
+            <h3>Manage Availability & Sessions</h3>
+            <p class="subtle">
+              Admins can delete unused availability slots, or cancel sessions that have already been booked.
+            </p>
+            <ul id="adminAvailabilityList" class="list">
+              <!-- JS populates -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
