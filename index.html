@@ -1,26 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tutoring Scheduler</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Tutoring Scheduler – Welcome</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: #f7f9fc;
+      display: block;
+      height: auto;
+      justify-content: flex-start;
+      align-items: stretch;
+    }
+
+    /* Navbar consistent with dashboard */
+    .navbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .navbar-actions button {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-subjects {
+      background-color: #ffffff;
+      color: #007bff;
+      font-weight: 600;
+    }
+
+    .btn-login {
+      background-color: #ffffff;
+      color: #007bff;
+    }
+
+    .btn-register {
+      background-color: #ffce47;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .landing-wrapper {
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .landing-card {
+      width: 80%;
+      max-width: 700px;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .landing-card h2 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 1.9rem;
+    }
+
+    .landing-card p {
+      margin: 0 auto;
+      max-width: 650px;
+      font-size: 1rem;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    /* Subjects panel – now dynamic */
+    #subjectsPanel {
+      width: 80%;
+      max-width: 700px;
+      margin: 20px auto 40px auto;
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: none;
+    }
+
+    #subjectsPanel h3 {
+      margin-top: 0;
+      text-align: center;
+    }
+
+    .subject-item {
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 0.95rem;
+      color: #444;
+      text-align: left;
+    }
+
+    .empty-message {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #777;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Tutoring Scheduler</h1>
-    <form id="loginForm">
-      <label for="email">Email:</label>
-      <input type="email" id="email" placeholder="Enter your email" required>
 
-      <label for="password">Password:</label>
-      <input type="password" id="password" placeholder="Enter your password" required>
+  <!-- NAVBAR like dashboard -->
+  <nav class="navbar">
+    <h2>Tutoring Scheduler</h2>
 
-      <button type="submit">Login</button>
-      <p class="alt-link">Need to register? <a href="register.html">Sign up here</a></p>
-    </form>
+    <div class="navbar-actions">
+      <button class="btn-subjects" onclick="toggleSubjects()">View Subjects</button>
+      <button class="btn-login" onclick="location.href='login.html'">Login</button>
+      <button class="btn-register" onclick="location.href='register.html'">Sign Up</button>
+    </div>
+  </nav>
+
+  <!-- CENTERED WELCOME CARD -->
+  <div class="landing-wrapper">
+    <div class="landing-card">
+      <h2>Welcome to Tutoring Scheduler</h2>
+      <p>
+        Tutoring Scheduler helps students connect with university tutors for courses in 
+        Mathematics, Computer Science, and more. Students can request sessions, tutors can 
+        publish their availability, and admins keep everything organized.
+      </p>
+    </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- SUBJECT LIST (loaded from DB) -->
+  <div id="subjectsPanel">
+    <h3>Available Subjects</h3>
+    <div id="subjectsList"></div>
+    <p id="subjectsEmptyMessage" class="empty-message" style="display: none;">
+      No subjects available yet.
+    </p>
+  </div>
+
+  <script>
+    const API_BASE = "https://tutoring-scheduler.onrender.com/api";
+    let subjectsLoaded = false;
+
+    async function loadSubjectsFromDB() {
+      if (subjectsLoaded) return;
+
+      const listEl = document.getElementById("subjectsList");
+      const emptyEl = document.getElementById("subjectsEmptyMessage");
+
+      try {
+        const res = await fetch(`${API_BASE}/subjects`); // same origin as backend
+        if (!res.ok) {
+          console.error("Failed to load subjects:", res.status);
+          emptyEl.textContent = "Error loading subjects.";
+          emptyEl.style.display = "block";
+          return;
+        }
+
+        const subjects = await res.json();
+        listEl.innerHTML = "";
+
+        if (!Array.isArray(subjects) || subjects.length === 0) {
+          emptyEl.style.display = "block";
+          return;
+        }
+
+        emptyEl.style.display = "none";
+
+        subjects.forEach((s) => {
+          const div = document.createElement("div");
+          div.className = "subject-item";
+          div.textContent = s.subject_name;
+          listEl.appendChild(div);
+        });
+
+        subjectsLoaded = true;
+      } catch (err) {
+        console.error("Error loading subjects:", err);
+        emptyEl.textContent = "Error loading subjects.";
+        emptyEl.style.display = "block";
+      }
+    }
+
+    function toggleSubjects() {
+      const panel = document.getElementById("subjectsPanel");
+      const isHidden = panel.style.display === "none" || panel.style.display === "";
+
+      if (isHidden) {
+        panel.style.display = "block";
+        loadSubjectsFromDB();  // load from DB on first open
+      } else {
+        panel.style.display = "none";
+      }
+      // No scrolling → the top stays visible
+    }
+  </script>
+
 </body>
 </html>

@@ -19,7 +19,7 @@ function saveCurrentUser(user) {
 
 function logout() {
   localStorage.removeItem("user");
-  window.location.href = "index.html";
+  window.location.href = "login.html";
 }
 
 function toDateObject(value) {
@@ -96,7 +96,7 @@ function getLocationForSubject(subjectName) {
 
 
 // =============================
-// LOGIN PAGE (index.html)
+// LOGIN PAGE (login.html)
 // =============================
 
 const loginForm = document.getElementById("loginForm");
@@ -167,7 +167,7 @@ if (registerForm) {
       }
 
       alert("Registration successful! Please log in.");
-      window.location.href = "index.html";
+      window.location.href = "login.html";
     } catch (err) {
       console.error("Register error:", err);
       alert("Error connecting to server");
@@ -192,7 +192,7 @@ const currentUserLabel = document.getElementById("currentUserLabel");
 if (studentDashboard || tutorDashboard || adminDashboard) {
   const user = getCurrentUser();
   if (!user) {
-    window.location.href = "index.html";
+    window.location.href = "login.html";
   } else {
     if (currentUserLabel) {
       currentUserLabel.textContent = `${user.full_name} (${user.role})`;
@@ -1282,7 +1282,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("tutorDashboard") ||
     document.getElementById("adminDashboard");
 
-  // If we're on home.html or index.html (login), do nothing here
+  // If we're on index.html or login.html (login), do nothing here
   if (!hasDashboard) {
     return;
   }
@@ -1290,7 +1290,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const user = getCurrentUser();
   if (!user) {
     // No logged-in user → go to login
-    window.location.href = "index.html";
+    window.location.href = "login.html";
     return;
   }
 
@@ -1312,8 +1312,3 @@ document.addEventListener("DOMContentLoaded", () => {
     logoutBtn.addEventListener("click", logout);
   }
 });
-
-
-
-
-
