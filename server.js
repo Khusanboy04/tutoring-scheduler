@@ -8,15 +8,9 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs");
 
 const app = express();
-//app.use(cors());
+app.use(cors());
 app.use(bodyParser.json());
 
-app.use(
-  cors({
-    origin: "*", // we can tighten later if needed
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  })
-);
 app.use(express.json());
 
 // =============================
@@ -30,9 +24,9 @@ app.use(express.json());
 //   database: "tutoring_system",
 // });
 
-const mysql = require("mysql2/promise");
+const mysql = require("mysql2");
 
-const pool = mysql.createPool({
+const db = mysql.createPool({
   host: process.env.MYSQLHOST || "localhost",
   user: process.env.MYSQLUSER || "root",
   password: process.env.MYSQLPASSWORD || "S@m@nd@r@k2004",
