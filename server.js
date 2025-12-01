@@ -9,8 +9,16 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs");
 
 const app = express();
-app.use(cors());
+//app.use(cors());
 app.use(bodyParser.json());
+
+app.use(
+  cors({
+    origin: "*", // we can tighten later if needed
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
+app.use(express.json());
 
 // =============================
 // DATABASE CONNECTION
