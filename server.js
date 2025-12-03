@@ -467,7 +467,7 @@ app.put("/api/appointments/:id/status", async (req, res) => {
       );
     }
 
-    // ---- NEW: Notification for tutor ----
+    // ---- Notification for tutor ----
     let tutorMsg;
     if (status === "accepted") {
       tutorMsg = `You accepted ${appt.student_name}'s ${appt.subject_name} session on ${dateStr} at ${timeStr}.`;
@@ -478,6 +478,12 @@ app.put("/api/appointments/:id/status", async (req, res) => {
     }
 
     if (tutorMsg) {
+      console.log(
+        "Inserting tutor notification:",
+        appt.tutor_id,
+        tutorMsg
+      );
+
       await query(
         "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
         [appt.tutor_id, tutorMsg]
