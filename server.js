@@ -634,31 +634,28 @@ app.post("/api/tutor/subjects", async (req, res) => {
 });
 // POST add availability slot
 app.post("/api/tutor/availability", async (req, res) => {
-  try { 
+  try {
     const { tutor_id, date, start_time } = req.body;
+
+    // Basic validation
     if (!tutor_id || !date || !start_time) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Block past slots
-    if (!available_date || !start_time || !end_time) {
-      return res.status(400).json({ error: "Missing date or time" });
-    }
-
+    // ---- Block past slots (using date + start_time) ----
     const now = new Date();
 
-    // Build a JS Date for the slot start: available_date + start_time
-    const [year, month, day] = available_date.split("-").map(Number); // "2025-12-08"
-    const [sh, sm] = start_time.split(":").map(Number);               // "13:00"
-
-    const slotStart = new Date(year, month - 1, day, sh, sm, 0, 0);
+    // Build JS Date for slot start: date + start_time
+    const [year, month, day] = date.split("-").map(Number);       // "2025-12-08"
+    const [sh, sm] = start_time.split(":").map(Number);           // "13:00"
+    const slotStart = new Date(year, month - 1, day, sh, sm || 0, 0, 0);
 
     if (slotStart <= now) {
       return res
         .status(400)
-        .json({ error: "Cannot create availability in the past." });
+        .json({ message: "Cannot create availability in the past." });
     }
-
+    // ---- END block past slots ----
 
     // Normalize start_time to HH:MM:SS for DB
     const startTimeDb = `${start_time}:00`;
