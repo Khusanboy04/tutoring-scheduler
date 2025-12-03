@@ -17,13 +17,6 @@ app.use(express.json());
 // DATABASE CONNECTION
 // =============================
 
-// const db = mysql.createPool({
-//   host: "localhost",
-//   user: "root",                // ⬅️ change if needed
-//   password: "S@m@nd@r@k2004", // ⬅️ put your MySQL password
-//   database: "tutoring_system",
-// });
-
 const mysql = require("mysql2");
 
 const db = mysql.createPool({
@@ -493,19 +486,11 @@ app.put("/api/appointments/:id/status", async (req, res) => {
     }
 
     if (tutorMsg) {
-      try {
-        await query(
-          "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-          [appt.tutor_id, tutorMsg]
-        );
-        console.log("STATUS ROUTE: tutor notification inserted");
-      } catch (err2) {
-        console.error(
-          "STATUS ROUTE: error inserting tutor notification:",
-          err2
-        );
-        // we don't fail the whole request here; student side already updated
-      }
+      await query(
+        "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+        [appt.tutor_id, tutorMsg]
+      );
+      console.log("STATUS ROUTE: tutor notification inserted");
     }
 
     res.json({ message: "Appointment status updated" });
