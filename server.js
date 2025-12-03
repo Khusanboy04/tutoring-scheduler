@@ -165,8 +165,6 @@ app.post("/api/login", async (req, res) => {
 
 // =============================
 // STUDENT: FIND TUTORS / AVAILABILITY
-// =============================
-// GET /api/tutors/availability?subject=Mathematics&date=2025-10-27&time=14:00
 // Search available tutors by subject / date / time / tutorName
 app.get("/api/tutors/availability", async (req, res) => {
   try {
@@ -187,9 +185,10 @@ app.get("/api/tutors/availability", async (req, res) => {
       LEFT JOIN tutor_subjects ts ON ts.tutor_id = u.user_id
       LEFT JOIN subjects s ON s.subject_id = ts.subject_id
       WHERE a.status = 'available'
-      AND (
-      a.available_date > CURDATE()
-      OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
+        AND (
+          a.available_date > CURDATE()
+          OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
+        )
     `;
     const params = [];
 
@@ -236,61 +235,6 @@ app.get("/api/tutors/availability", async (req, res) => {
   }
 });
 
-// =============================
-// STUDENT: CREATE APPOINTMENT
-// =============================
-// POST /api/appointments
-// body: { student_id, tutor_id, subject_name, availability_id }
-// GET /api/tutors/availability?subject=&date=&time=&tutorName=
-app.get("/api/tutors/availability", async (req, res) => {
-  try {
-    const { subject, date, time, tutorName } = req.query;
-
-    let sql = `
-      SELECT 
-        a.availability_id,
-        a.tutor_id,
-        a.available_date,
-        a.start_time,
-        a.end_time,
-        a.status,
-        u.full_name AS tutor_name,
-        s.subject_name
-      FROM availability a
-      JOIN users u ON a.tutor_id = u.user_id
-      JOIN tutor_subjects ts ON ts.tutor_id = u.user_id
-      JOIN subjects s ON s.subject_id = ts.subject_id
-      WHERE a.status = 'available'
-    `;
-    const params = [];
-
-    if (subject) {
-      sql += " AND s.subject_name LIKE ?";
-      params.push(`%${subject}%`);
-    }
-    if (date) {
-      sql += " AND a.available_date = ?";
-      params.push(date);
-    }
-    if (time) {
-      sql += " AND a.start_time <= ? AND a.end_time >= ?";
-      params.push(`${time}:00`, `${time}:00`);
-    }
-    if (tutorName) {
-      sql += " AND u.full_name LIKE ?";
-      params.push(`%${tutorName}%`);
-    }
-
-    sql += " ORDER BY a.available_date, a.start_time";
-
-    const rows = await query(sql, params);
-    res.json(rows);
-  } catch (err) {
-    console.error("Error in /api/tutors/availability:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
 // STUDENT: UPCOMING (PENDING + ACCEPTED) APPOINTMENTS
 app.get("/api/student/:studentId/appointments/upcoming", async (req, res) => {
   try {
@@ -306,7 +250,6 @@ app.get("/api/student/:studentId/appointments/upcoming", async (req, res) => {
         a.end_time,
         s.subject_name,
         tut.full_name AS tutor_name
-        
       FROM appointments ap
       JOIN availability a ON ap.availability_id = a.availability_id
       JOIN subjects s ON ap.subject_id = s.subject_id
@@ -314,8 +257,9 @@ app.get("/api/student/:studentId/appointments/upcoming", async (req, res) => {
       WHERE ap.student_id = ?
         AND ap.status IN ('pending', 'accepted')
         AND (
-      a.available_date > CURDATE()
-      OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
+          a.available_date > CURDATE()
+          OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
+        )
       ORDER BY a.available_date, a.start_time
       `,
       [studentId]
@@ -327,7 +271,6 @@ app.get("/api/student/:studentId/appointments/upcoming", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 
 
@@ -421,7 +364,6 @@ app.get("/api/tutor/:tutorId/appointments/upcoming", async (req, res) => {
         a.end_time,
         s.subject_name,
         stu.full_name AS student_name
-        
       FROM appointments ap
       JOIN availability a ON ap.availability_id = a.availability_id
       JOIN subjects s ON ap.subject_id = s.subject_id
@@ -429,8 +371,9 @@ app.get("/api/tutor/:tutorId/appointments/upcoming", async (req, res) => {
       WHERE ap.tutor_id = ?
         AND ap.status IN ('pending', 'accepted')
         AND (
-      a.available_date > CURDATE()
-      OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
+          a.available_date > CURDATE()
+          OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
+        )
       ORDER BY a.available_date, a.start_time
       `,
       [tutorId]
@@ -442,7 +385,6 @@ app.get("/api/tutor/:tutorId/appointments/upcoming", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 
 
@@ -543,19 +485,20 @@ app.get("/api/tutor/:tutorId/availability", async (req, res) => {
     const rows = await query(
       `
       SELECT
-        availability_id,
-        tutor_id,
-        available_date,
-        start_time,
-        end_time,
-        status
-      FROM availability
-      WHERE tutor_id = ?
-        AND status IN ('available', 'pending')
+        a.availability_id,
+        a.tutor_id,
+        a.available_date,
+        a.start_time,
+        a.end_time,
+        a.status
+      FROM availability a
+      WHERE a.tutor_id = ?
+        AND a.status IN ('available', 'pending')
         AND (
-      a.available_date > CURDATE()
-      OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
-      ORDER BY available_date, start_time
+          a.available_date > CURDATE()
+          OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
+        )
+      ORDER BY a.available_date, a.start_time
       `,
       [tutorId]
     );
@@ -566,7 +509,6 @@ app.get("/api/tutor/:tutorId/availability", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 // =============================
 // START SERVER
@@ -889,7 +831,7 @@ app.delete("/api/subjects/:id", async (req, res) => {
   }
 });
 
-// ADMIN: VIEW ALL AVAILABILITY + ACTIVE SESSIONS
+// ADMIN: VIEW ALL FUTURE AVAILABILITY + ACTIVE SESSIONS
 app.get("/api/admin/availability", async (req, res) => {
   try {
     const rows = await query(
@@ -911,11 +853,11 @@ app.get("/api/admin/availability", async (req, res) => {
       LEFT JOIN appointments ap 
         ON ap.availability_id = a.availability_id
         AND ap.status IN ('pending', 'accepted')
-        AND (
-      a.available_date > CURDATE()
-      OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
       LEFT JOIN subjects s ON ap.subject_id = s.subject_id
       LEFT JOIN users stu ON ap.student_id = stu.user_id
+      WHERE
+        a.available_date > CURDATE()
+        OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
       ORDER BY a.available_date DESC, a.start_time DESC
       `
     );
