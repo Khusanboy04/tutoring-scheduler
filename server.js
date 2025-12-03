@@ -391,7 +391,6 @@ app.get("/api/tutor/:tutorId/appointments/upcoming", async (req, res) => {
 // =============================
 // PUT /api/appointments/:id/status  body: { status: 'accepted' | 'declined' | 'completed' }
 // TUTOR: UPDATE APPOINTMENT STATUS
-// TUTOR: UPDATE APPOINTMENT STATUS
 app.put("/api/appointments/:id/status", async (req, res) => {
   try {
     const appointmentId = req.params.id;

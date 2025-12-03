@@ -813,18 +813,41 @@ async function addTutorAvailability(user, date, startTime) {
   }
 }
 
-// ---- Tutor requests (appointments) ----
+// helper to check if a date+time is in the future (local time)
+function isFutureDateTime(dateStr, timeStr) {
+  if (!dateStr) return false;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  let hh = 0, mm = 0;
+  if (timeStr) {
+    const parts = timeStr.split(":");
+    hh = parseInt(parts[0] || "0", 10);
+    mm = parseInt(parts[1] || "0", 10);
+  }
+  const slot = new Date(y, m - 1, d, hh, mm, 0, 0);
+  const now = new Date();
+  return slot >= now;
+}
 
+// ---- Tutor requests (appointments) ----
 async function loadTutorRequests(user, listEl) {
   if (!user || !listEl) return;
 
   try {
     const res = await fetch(`${API_BASE}/tutor/${user.user_id}/appointments`);
-    const appointments = await res.json();
+    let appointments = await res.json();
+
+    if (!Array.isArray(appointments)) appointments = [];
+
+    // Extra safety: only pending + future
+    appointments = appointments.filter(
+      (appt) =>
+        appt.status === "pending" &&
+        isFutureDateTime(appt.available_date, appt.start_time)
+    );
 
     listEl.innerHTML = "";
 
-    if (!Array.isArray(appointments) || appointments.length === 0) {
+    if (appointments.length === 0) {
       const li = document.createElement("li");
       li.textContent = "No incoming requests.";
       listEl.appendChild(li);
@@ -894,8 +917,15 @@ async function updateAppointmentStatus(user, appointmentId, status, listEl) {
     }
 
     alert(data.message || "Status updated");
-    // Reload the requests list and, optionally, availability
+
+    // 1) Reload the tutor's incoming requests list
     await loadTutorRequests(user, listEl);
+
+    // 2) Reload notifications so tutor sees "You accepted/declined..." right away
+    const notifListEl = document.getElementById("notificationList");
+    if (notifListEl) {
+      await loadNotifications(user, notifListEl);
+    }
   } catch (err) {
     console.error("Error updating appointment status:", err);
     alert("Error connecting to server");
