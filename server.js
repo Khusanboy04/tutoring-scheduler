@@ -457,6 +457,26 @@ app.put("/api/appointments/:id/status", async (req, res) => {
     const dateStr = formatDateForMessage(appt.available_date);
     const timeStr = formatTimeForMessage(appt.start_time);
 
+    // ---- Notification for tutor ----
+    let tutorMsg;
+    if (status === "accepted") {
+      tutorMsg = `You accepted ${appt.student_name}'s ${appt.subject_name} session on ${dateStr} at ${timeStr}.`;
+    } else if (status === "declined") {
+      tutorMsg = `You declined ${appt.student_name}'s ${appt.subject_name} session on ${dateStr} at ${timeStr}.`;
+    } else if (status === "completed") {
+      tutorMsg = `You marked your ${appt.subject_name} session with ${appt.student_name} on ${dateStr} as completed.`;
+    }
+
+    if (tutorMsg) {
+      await query(
+        "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+        [appt.tutor_id, tutorMsg]
+      );
+      console.log("STATUS ROUTE: tutor notification inserted");
+    }
+
+
+
     // ---- Notification for student ----
     let studentMsg;
     if (status === "accepted") {
@@ -475,23 +495,6 @@ app.put("/api/appointments/:id/status", async (req, res) => {
       console.log("STATUS ROUTE: student notification inserted");
     }
 
-    // ---- Notification for tutor ----
-    let tutorMsg;
-    if (status === "accepted") {
-      tutorMsg = `You accepted ${appt.student_name}'s ${appt.subject_name} session on ${dateStr} at ${timeStr}.`;
-    } else if (status === "declined") {
-      tutorMsg = `You declined ${appt.student_name}'s ${appt.subject_name} session on ${dateStr} at ${timeStr}.`;
-    } else if (status === "completed") {
-      tutorMsg = `You marked your ${appt.subject_name} session with ${appt.student_name} on ${dateStr} as completed.`;
-    }
-
-    if (tutorMsg) {
-      await query(
-        "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-        [appt.tutor_id, tutorMsg]
-      );
-      console.log("STATUS ROUTE: tutor notification inserted");
-    }
 
     res.json({ message: "Appointment status updated" });
   } catch (err) {
