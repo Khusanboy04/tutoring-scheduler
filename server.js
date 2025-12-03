@@ -391,6 +391,7 @@ app.get("/api/tutor/:tutorId/appointments/upcoming", async (req, res) => {
 // =============================
 // PUT /api/appointments/:id/status  body: { status: 'accepted' | 'declined' | 'completed' }
 // TUTOR: UPDATE APPOINTMENT STATUS
+// TUTOR: UPDATE APPOINTMENT STATUS
 app.put("/api/appointments/:id/status", async (req, res) => {
   try {
     const appointmentId = req.params.id;
@@ -447,24 +448,40 @@ app.put("/api/appointments/:id/status", async (req, res) => {
       );
     }
 
-    // Notification for student
-    let msg;
     const dateStr = formatDateForMessage(appt.available_date);
     const timeStr = formatTimeForMessage(appt.start_time);
 
+    // ---- Notification for student ----
+    let studentMsg;
     if (status === "accepted") {
-      msg = `${appt.tutor_name} accepted your ${appt.subject_name} session on ${dateStr} at ${timeStr}.`;
+      studentMsg = `${appt.tutor_name} accepted your ${appt.subject_name} session on ${dateStr} at ${timeStr}.`;
     } else if (status === "declined") {
-      msg = `${appt.tutor_name} declined your ${appt.subject_name} session on ${dateStr} at ${timeStr}.`;
+      studentMsg = `${appt.tutor_name} declined your ${appt.subject_name} session on ${dateStr} at ${timeStr}.`;
     } else if (status === "completed") {
-      msg = `Your ${appt.subject_name} session on ${dateStr} was marked completed.`;
+      studentMsg = `Your ${appt.subject_name} session on ${dateStr} was marked completed.`;
     }
 
-
-    if (msg) {
+    if (studentMsg) {
       await query(
         "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-        [appt.student_id, msg]
+        [appt.student_id, studentMsg]
+      );
+    }
+
+    // ---- NEW: Notification for tutor ----
+    let tutorMsg;
+    if (status === "accepted") {
+      tutorMsg = `You accepted ${appt.student_name}'s ${appt.subject_name} session on ${dateStr} at ${timeStr}.`;
+    } else if (status === "declined") {
+      tutorMsg = `You declined ${appt.student_name}'s ${appt.subject_name} session on ${dateStr} at ${timeStr}.`;
+    } else if (status === "completed") {
+      tutorMsg = `You marked your ${appt.subject_name} session with ${appt.student_name} on ${dateStr} as completed.`;
+    }
+
+    if (tutorMsg) {
+      await query(
+        "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+        [appt.tutor_id, tutorMsg]
       );
     }
 
@@ -534,7 +551,7 @@ app.get("/api/subjects", async (req, res) => {
   }
 });
 
-// TUTOR: VIEW ALL THEIR APPOINTMENT REQUESTS
+// TUTOR: VIEW INCOMING APPOINTMENT REQUESTS (pending, future only)
 app.get("/api/tutor/:tutorId/appointments", async (req, res) => {
   try {
     const tutorId = req.params.tutorId;
@@ -556,15 +573,12 @@ app.get("/api/tutor/:tutorId/appointments", async (req, res) => {
       JOIN availability a ON ap.availability_id = a.availability_id
       JOIN subjects s ON ap.subject_id = s.subject_id
       WHERE ap.tutor_id = ?
-      ORDER BY 
-        CASE ap.status 
-          WHEN 'pending' THEN 0
-          WHEN 'accepted' THEN 1
-          WHEN 'declined' THEN 2
-          WHEN 'completed' THEN 3
-          ELSE 4
-        END,
-        ap.created_at DESC
+        AND ap.status = 'pending'
+        AND (
+          a.available_date > CURDATE()
+          OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
+        )
+      ORDER BY a.available_date, a.start_time
       `,
       [tutorId]
     );
@@ -642,7 +656,7 @@ app.post("/api/tutor/availability", async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // ---- Block past slots (using date + start_time) ----
+    //Block past slots (using date + start_time)
     const now = new Date();
 
     // Build JS Date for slot start: date + start_time
@@ -655,7 +669,6 @@ app.post("/api/tutor/availability", async (req, res) => {
         .status(400)
         .json({ message: "Cannot create availability in the past." });
     }
-    // ---- END block past slots ----
 
     // Normalize start_time to HH:MM:SS for DB
     const startTimeDb = `${start_time}:00`;
@@ -700,7 +713,7 @@ app.post("/api/tutor/availability", async (req, res) => {
 });
 
 
-// GET notifications for a user
+// GET notifications for a user (latest 40)
 app.get("/api/notifications/:userId", async (req, res) => {
   const userId = req.params.userId;
   try {
@@ -708,7 +721,8 @@ app.get("/api/notifications/:userId", async (req, res) => {
       `SELECT notification_id, message, status, created_at
        FROM notifications
        WHERE user_id = ?
-       ORDER BY created_at DESC`,
+       ORDER BY created_at DESC
+       LIMIT 40`,
       [userId]
     );
 

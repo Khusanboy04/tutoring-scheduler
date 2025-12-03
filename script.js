@@ -826,7 +826,7 @@ async function loadTutorRequests(user, listEl) {
 
     if (!Array.isArray(appointments) || appointments.length === 0) {
       const li = document.createElement("li");
-      li.textContent = "No appointment requests yet.";
+      li.textContent = "No incoming requests.";
       listEl.appendChild(li);
       return;
     }
@@ -851,7 +851,6 @@ async function loadTutorRequests(user, listEl) {
         <span class="${pillClass}">${appt.status}</span>
       `;
 
-      // For pending appointments, show Accept / Decline buttons
       if (appt.status === "pending") {
         const acceptBtn = document.createElement("button");
         acceptBtn.textContent = "Accept";
@@ -911,7 +910,7 @@ async function loadNotifications(user, listEl) {
   if (!user || !listEl) return;
   try {
     const res = await fetch(`${API_BASE}/notifications/${user.user_id}`);
-    const notifs = await res.json();
+    let notifs = await res.json();
 
     listEl.innerHTML = "";
     if (!Array.isArray(notifs) || notifs.length === 0) {
@@ -921,6 +920,9 @@ async function loadNotifications(user, listEl) {
       return;
     }
 
+    // Just to be safe, cap to 40 on the frontend as well
+    notifs = notifs.slice(0, 40);
+
     notifs.forEach((n) => {
       const li = document.createElement("li");
       li.classList.add("notification-item");
@@ -929,12 +931,21 @@ async function loadNotifications(user, listEl) {
         li.classList.add("unread");
       }
 
+      // Message
       const msgSpan = document.createElement("span");
       msgSpan.textContent = n.message;
-
       li.appendChild(msgSpan);
 
-      // Show a "Mark as read" button only for unread notifications
+      // Time (created_at)
+      if (n.created_at) {
+        const timeDiv = document.createElement("div");
+        timeDiv.classList.add("small-muted");
+        const dt = new Date(n.created_at);
+        timeDiv.textContent = dt.toLocaleString(); // you can customize format if you want
+        li.appendChild(timeDiv);
+      }
+
+      // "Mark as read" button only for unread notifications
       if (n.status === "unread") {
         const btn = document.createElement("button");
         btn.textContent = "Mark as read";
