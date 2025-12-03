@@ -193,7 +193,6 @@ app.get("/api/tutors/availability", async (req, res) => {
     const params = [];
 
     if (subject) {
-      // exact match with dropdown value
       sql += " AND s.subject_name = ?";
       params.push(subject);
     }
@@ -209,7 +208,6 @@ app.get("/api/tutors/availability", async (req, res) => {
     }
 
     if (time) {
-      // time comes in like "10:00" from dropdown
       const t = `${time}:00`;
       sql += " AND a.start_time <= ? AND a.end_time >= ?";
       params.push(t, t);
@@ -235,7 +233,7 @@ app.get("/api/tutors/availability", async (req, res) => {
   }
 });
 
-// STUDENT: UPCOMING (PENDING + ACCEPTED) APPOINTMENTS
+// STUDENT: UPCOMING (PENDING + ACCEPTED) APPOINTMENTS — FUTURE ONLY
 app.get("/api/student/:studentId/appointments/upcoming", async (req, res) => {
   try {
     const studentId = req.params.studentId;
@@ -267,7 +265,7 @@ app.get("/api/student/:studentId/appointments/upcoming", async (req, res) => {
 
     res.json(rows);
   } catch (err) {
-    console.error("Error in GET /api/student/:id/appointments/upcoming:", err);
+    console.error("Error in GET /api/student/:studentId/appointments/upcoming:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -381,7 +379,7 @@ app.get("/api/tutor/:tutorId/appointments/upcoming", async (req, res) => {
 
     res.json(rows);
   } catch (err) {
-    console.error("Error in GET /api/tutor/:id/appointments/upcoming:", err);
+    console.error("Error in GET /api/tutor/:tutorId/appointments/upcoming:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
