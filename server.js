@@ -550,7 +550,7 @@ app.get("/api/subjects", async (req, res) => {
   }
 });
 
-// TUTOR: VIEW INCOMING APPOINTMENT REQUESTS (pending, future only)
+// TUTOR: VIEW INCOMING APPOINTMENT REQUESTS (all PENDING)
 app.get("/api/tutor/:tutorId/appointments", async (req, res) => {
   try {
     const tutorId = req.params.tutorId;
@@ -573,10 +573,6 @@ app.get("/api/tutor/:tutorId/appointments", async (req, res) => {
       JOIN subjects s ON ap.subject_id = s.subject_id
       WHERE ap.tutor_id = ?
         AND ap.status = 'pending'
-        AND (
-          a.available_date > CURDATE()
-          OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
-        )
       ORDER BY a.available_date, a.start_time
       `,
       [tutorId]

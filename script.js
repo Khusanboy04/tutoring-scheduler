@@ -813,22 +813,8 @@ async function addTutorAvailability(user, date, startTime) {
   }
 }
 
-// helper to check if a date+time is in the future (local time)
-function isFutureDateTime(dateStr, timeStr) {
-  if (!dateStr) return false;
-  const [y, m, d] = dateStr.split("-").map(Number);
-  let hh = 0, mm = 0;
-  if (timeStr) {
-    const parts = timeStr.split(":");
-    hh = parseInt(parts[0] || "0", 10);
-    mm = parseInt(parts[1] || "0", 10);
-  }
-  const slot = new Date(y, m - 1, d, hh, mm, 0, 0);
-  const now = new Date();
-  return slot >= now;
-}
 
-// ---- Tutor requests (appointments) ----
+// Tutor requests (appointments)
 async function loadTutorRequests(user, listEl) {
   if (!user || !listEl) return;
 
@@ -838,12 +824,8 @@ async function loadTutorRequests(user, listEl) {
 
     if (!Array.isArray(appointments)) appointments = [];
 
-    // Extra safety: only pending + future
-    appointments = appointments.filter(
-      (appt) =>
-        appt.status === "pending" &&
-        isFutureDateTime(appt.available_date, appt.start_time)
-    );
+    // Only pending requests
+    appointments = appointments.filter((appt) => appt.status === "pending");
 
     listEl.innerHTML = "";
 
