@@ -29,7 +29,7 @@ const mysql = require("mysql2");
 const db = mysql.createPool({
   host: process.env.MYSQLHOST || "localhost",
   user: process.env.MYSQLUSER || "root",
-  password: process.env.MYSQLPASSWORD || "S@m@nd@r@k2004",
+  password: process.env.MYSQLPASSWORD || "",
   database: process.env.MYSQLDATABASE || "tutoring_system",
   port: process.env.MYSQLPORT || 3306,
 });
@@ -187,6 +187,9 @@ app.get("/api/tutors/availability", async (req, res) => {
       LEFT JOIN tutor_subjects ts ON ts.tutor_id = u.user_id
       LEFT JOIN subjects s ON s.subject_id = ts.subject_id
       WHERE a.status = 'available'
+      AND (
+      a.available_date > CURDATE()
+      OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
     `;
     const params = [];
 
@@ -310,6 +313,9 @@ app.get("/api/student/:studentId/appointments/upcoming", async (req, res) => {
       JOIN users tut ON ap.tutor_id = tut.user_id
       WHERE ap.student_id = ?
         AND ap.status IN ('pending', 'accepted')
+        AND (
+      a.available_date > CURDATE()
+      OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
       ORDER BY a.available_date, a.start_time
       `,
       [studentId]
@@ -422,6 +428,9 @@ app.get("/api/tutor/:tutorId/appointments/upcoming", async (req, res) => {
       JOIN users stu ON ap.student_id = stu.user_id
       WHERE ap.tutor_id = ?
         AND ap.status IN ('pending', 'accepted')
+        AND (
+      a.available_date > CURDATE()
+      OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
       ORDER BY a.available_date, a.start_time
       `,
       [tutorId]
@@ -543,6 +552,9 @@ app.get("/api/tutor/:tutorId/availability", async (req, res) => {
       FROM availability
       WHERE tutor_id = ?
         AND status IN ('available', 'pending')
+        AND (
+      a.available_date > CURDATE()
+      OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
       ORDER BY available_date, start_time
       `,
       [tutorId]
@@ -682,11 +694,31 @@ app.post("/api/tutor/subjects", async (req, res) => {
 });
 // POST add availability slot
 app.post("/api/tutor/availability", async (req, res) => {
-  try {
+  try { 
     const { tutor_id, date, start_time } = req.body;
     if (!tutor_id || !date || !start_time) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+
+    // Block past slots
+    if (!available_date || !start_time || !end_time) {
+      return res.status(400).json({ error: "Missing date or time" });
+    }
+
+    const now = new Date();
+
+    // Build a JS Date for the slot start: available_date + start_time
+    const [year, month, day] = available_date.split("-").map(Number); // "2025-12-08"
+    const [sh, sm] = start_time.split(":").map(Number);               // "13:00"
+
+    const slotStart = new Date(year, month - 1, day, sh, sm, 0, 0);
+
+    if (slotStart <= now) {
+      return res
+        .status(400)
+        .json({ error: "Cannot create availability in the past." });
+    }
+
 
     // Normalize start_time to HH:MM:SS for DB
     const startTimeDb = `${start_time}:00`;
@@ -879,6 +911,9 @@ app.get("/api/admin/availability", async (req, res) => {
       LEFT JOIN appointments ap 
         ON ap.availability_id = a.availability_id
         AND ap.status IN ('pending', 'accepted')
+        AND (
+      a.available_date > CURDATE()
+      OR (a.available_date = CURDATE() AND a.start_time >= CURTIME())
       LEFT JOIN subjects s ON ap.subject_id = s.subject_id
       LEFT JOIN users stu ON ap.student_id = stu.user_id
       ORDER BY a.available_date DESC, a.start_time DESC
