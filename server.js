@@ -396,8 +396,11 @@ app.put("/api/appointments/:id/status", async (req, res) => {
     const appointmentId = req.params.id;
     const { status } = req.body;
 
+    console.log("STATUS ROUTE HIT:", { appointmentId, status });
+
     const allowed = ["accepted", "declined", "completed"];
     if (!allowed.includes(status)) {
+      console.warn("Invalid status in status route:", status);
       return res.status(400).json({ message: "Invalid status" });
     }
 
@@ -423,16 +426,25 @@ app.put("/api/appointments/:id/status", async (req, res) => {
     );
 
     if (appts.length === 0) {
+      console.warn("No appointment found in status route:", appointmentId);
       return res.status(404).json({ message: "Appointment not found" });
     }
 
     const appt = appts[0];
+    console.log("STATUS ROUTE APPT:", {
+      appointmentId: appt.appointment_id,
+      student_id: appt.student_id,
+      tutor_id: appt.tutor_id,
+      subject_id: appt.subject_id,
+      availability_id: appt.availability_id,
+    });
 
     // Update appointment status
     await query(
       "UPDATE appointments SET status = ? WHERE appointment_id = ?",
       [status, appointmentId]
     );
+    console.log("STATUS ROUTE: appointment updated");
 
     // Adjust availability depending on status
     if (status === "accepted") {
@@ -440,11 +452,13 @@ app.put("/api/appointments/:id/status", async (req, res) => {
         "UPDATE availability SET status = 'booked' WHERE availability_id = ?",
         [appt.availability_id]
       );
+      console.log("STATUS ROUTE: availability set to booked");
     } else if (status === "declined") {
       await query(
         "UPDATE availability SET status = 'available' WHERE availability_id = ?",
         [appt.availability_id]
       );
+      console.log("STATUS ROUTE: availability set to available");
     }
 
     const dateStr = formatDateForMessage(appt.available_date);
@@ -465,6 +479,7 @@ app.put("/api/appointments/:id/status", async (req, res) => {
         "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
         [appt.student_id, studentMsg]
       );
+      console.log("STATUS ROUTE: student notification inserted");
     }
 
     // ---- Notification for tutor ----
@@ -478,16 +493,19 @@ app.put("/api/appointments/:id/status", async (req, res) => {
     }
 
     if (tutorMsg) {
-      console.log(
-        "Inserting tutor notification:",
-        appt.tutor_id,
-        tutorMsg
-      );
-
-      await query(
-        "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-        [appt.tutor_id, tutorMsg]
-      );
+      try {
+        await query(
+          "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+          [appt.tutor_id, tutorMsg]
+        );
+        console.log("STATUS ROUTE: tutor notification inserted");
+      } catch (err2) {
+        console.error(
+          "STATUS ROUTE: error inserting tutor notification:",
+          err2
+        );
+        // we don't fail the whole request here; student side already updated
+      }
     }
 
     res.json({ message: "Appointment status updated" });
