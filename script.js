@@ -590,12 +590,20 @@ async function initTutorDashboard(user) {
     });
   }
 
-  // Add availability (no subject!) – make sure we only bind once
-if (availabilityForm && !availabilityForm.dataset.boundSubmit) {
-  availabilityForm.dataset.boundSubmit = "true"; // flag so we don't attach twice
+  // Put this near the top of script.js (outside any function)
+let isAddingAvailability = false;
 
-  availabilityForm.addEventListener("submit", async (e) => {
+// Add availability (no subject!) – Safari-safe
+if (availabilityForm) {
+  availabilityForm.onsubmit = async (e) => {
     e.preventDefault();
+
+    // Prevent double-submit (Safari firing twice, or fast double click)
+    if (isAddingAvailability) {
+      console.warn("Add availability already in progress, ignoring duplicate submit");
+      return;
+    }
+
     const date = document.getElementById("tutorAvailDate").value;
     const startTime = document.getElementById("tutorAvailStartTime").value;
 
@@ -604,9 +612,14 @@ if (availabilityForm && !availabilityForm.dataset.boundSubmit) {
       return;
     }
 
-    await addTutorAvailability(user, date, startTime);
-    await loadTutorAvailability(user, availabilityList);
-  });
+    isAddingAvailability = true;
+    try {
+      await addTutorAvailability(user, date, startTime);
+      await loadTutorAvailability(user, availabilityList);
+    } finally {
+      isAddingAvailability = false;
+    }
+  };
 }
 }
 
