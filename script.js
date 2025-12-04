@@ -590,22 +590,24 @@ async function initTutorDashboard(user) {
     });
   }
 
-  // Add availability (no subject!)
-  if (availabilityForm) {
-    availabilityForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const date = document.getElementById("tutorAvailDate").value;
-      const startTime = document.getElementById("tutorAvailStartTime").value;
+  // Add availability (no subject!) – make sure we only bind once
+if (availabilityForm && !availabilityForm.dataset.boundSubmit) {
+  availabilityForm.dataset.boundSubmit = "true"; // flag so we don't attach twice
 
-      if (!date || !startTime) {
-        alert("Please choose date and start time.");
-        return;
-      }
+  availabilityForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const date = document.getElementById("tutorAvailDate").value;
+    const startTime = document.getElementById("tutorAvailStartTime").value;
 
-      await addTutorAvailability(user, date, startTime);
-      await loadTutorAvailability(user, availabilityList);
-    });
-  }
+    if (!date || !startTime) {
+      alert("Please choose date and start time.");
+      return;
+    }
+
+    await addTutorAvailability(user, date, startTime);
+    await loadTutorAvailability(user, availabilityList);
+  });
+}
 }
 
 
