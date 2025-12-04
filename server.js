@@ -285,7 +285,9 @@ app.post("/api/appointments", async (req, res) => {
       [availability_id]
     );
     if (slots.length === 0) {
-      return res.status(400).json({ message: "Time slot is no longer available" });
+      return res
+        .status(400)
+        .json({ message: "Time slot is no longer available" });
     }
     const slot = slots[0];
 
@@ -313,21 +315,34 @@ app.post("/api/appointments", async (req, res) => {
       [availability_id]
     );
 
-    // 5) Create a notification for the tutor
+    // 5) Look up names for nicer messages
     const studentRows = await query(
       "SELECT full_name FROM users WHERE user_id = ?",
       [student_id]
     );
     const studentName = studentRows[0]?.full_name || "A student";
 
+    const tutorRows = await query(
+      "SELECT full_name FROM users WHERE user_id = ?",
+      [tutor_id]
+    );
+    const tutorName = tutorRows[0]?.full_name || "your tutor";
+
     const dateStr = formatDateForMessage(slot.available_date);
     const timeStr = formatTimeForMessage(slot.start_time);
 
-    const message = `${studentName} requested a ${subject_name} session on ${dateStr} at ${timeStr}.`;
-
+    // 6) Create a notification for the tutor (existing behavior)
+    const tutorMessage = `${studentName} requested a ${subject_name} session on ${dateStr} at ${timeStr}.`;
     await query(
       "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-      [tutor_id, message]
+      [tutor_id, tutorMessage]
+    );
+
+    // 7) NEW: Create a notification for the student
+    const studentMessage = `You requested a ${subject_name} session with ${tutorName} on ${dateStr} at ${timeStr}.`;
+    await query(
+      "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+      [student_id, studentMessage]
     );
 
     res.status(201).json({
